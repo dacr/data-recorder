@@ -1,13 +1,13 @@
 all:
 
 backend:
-	sbt "~backend/reStart"
+	sbt '~backend/reStart'
 
 frontend:
-	sbt "~frontend/fastLinkJS"
+	sbt '~frontend/fastLinkJS'
 
 
-frontend-init:
-	cd frontend
-	npm install
-	yarn exec vite
+frontend-vite:
+	cd modules/frontend && \
+		npm install && \
+		./node_modules/yarn/bin/yarn run vite

@@ -1,5 +1,7 @@
 package fr.janalyse.datarecorder.protocol
 
-trait DataRecorderService {
+import zio.*
 
+trait DataRecorderService {
+  def serviceStatus:UIO[ServiceStatus]
 }

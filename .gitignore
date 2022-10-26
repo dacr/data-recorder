@@ -1,4 +1,3 @@
-.DS_Store/
 *~
 .~*
 .idea/
@@ -11,11 +10,8 @@ plot*.html
 test*.log
 *.tmp
 null
-
-project/target
 .metals/
-
-tmp-*.gif
-tmp-*.png
+package-lock.json
 
 private-application*.conf
+node_modules/
