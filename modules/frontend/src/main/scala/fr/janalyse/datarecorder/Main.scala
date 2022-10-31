@@ -5,13 +5,25 @@ import org.scalajs.dom
 import fr.janalyse.datarecorder.protocol.*
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom.Event
-import sttp.client3.impl.zio.FetchZioBackend
+import sttp.tapir.client.sttp.SttpClientInterpreter
+import sttp.client3.*
+
+object DataRecorderService {
+  import fr.janalyse.datarecorder.protocol.DataRecorderEndPoints.*
+
+  val backend = FetchBackend()
+
+  def serviceStatus() =
+    SttpClientInterpreter()
+      .toRequestThrowErrors(serviceStatusEndpoint, baseUri = None)
+      .apply(())
+      .send(backend)
+}
 
 object App {
 
   val runtime = zio.Runtime.default
 
-  //val backend = FetchZioBackend()
 
   def root = div(
     h1("test")
@@ -20,6 +32,9 @@ object App {
   def initialize(onEvent: Event): Unit = {
     val appContainer = dom.document.querySelector("#app")
     appContainer.innerHTML = ""
+    implicit val ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
+    println("ICI")
+    DataRecorderService.serviceStatus().map(res => println(res.body.version.toString()))
     val _            = render(appContainer, root)
   }
 

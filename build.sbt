@@ -39,8 +39,8 @@ lazy val backend =
         "dev.zio"                     %% "zio-logging-slf4j"       % versions.ziologging,
         "ch.qos.logback"               % "logback-classic"         % versions.logback,
         "com.softwaremill.sttp.tapir" %% "tapir-zio"               % versions.tapir,
-        "com.softwaremill.sttp.tapir" %% "tapir-zio-http-server"   % versions.tapir,
         "com.softwaremill.sttp.tapir" %% "tapir-json-zio"          % versions.tapir,
+        "com.softwaremill.sttp.tapir" %% "tapir-zio-http-server"   % versions.tapir,
         "com.softwaremill.sttp.tapir" %% "tapir-swagger-ui-bundle" % versions.tapir,
         "dev.zio"                     %% "zio-test"                % versions.zio % Test,
         "dev.zio"                     %% "zio-test-junit"          % versions.zio % Test,
@@ -72,7 +72,8 @@ lazy val frontend =
         "dev.zio"                       %%% "zio-streams"               % versions.zio,
         "dev.zio"                       %%% "zio-json"                  % versions.zioJson,
         // sttp
-        "com.softwaremill.sttp.tapir"   %%% "tapir-sttp-client"         % "1.1.3",
+        "com.softwaremill.sttp.tapir"   %%% "tapir-sttp-client"         % versions.tapir,
+        "com.softwaremill.sttp.tapir"   %%% "tapir-json-zio"            % versions.tapir,
         "com.softwaremill.sttp.client3" %%% "zio"                       % "3.8.3",
         // laminar
         "com.raquo"                     %%% "laminar"                   % versions.laminar,
@@ -85,9 +86,21 @@ lazy val sharedDomain =
     .in(file("modules/common"))
     .settings(
       libraryDependencies ++= Seq(
-        "dev.zio" %%% "zio-json" % versions.zioJson
+        "dev.zio"                     %%% "zio-json"          % versions.zioJson,
+        "com.softwaremill.sttp.tapir" %%% "tapir-sttp-client" % versions.tapir,
+        "com.softwaremill.sttp.tapir" %%% "tapir-json-zio"    % versions.tapir
       )
     )
+//    .jvmSettings(
+//      libraryDependencies ++= Seq(
+//        "com.softwaremill.sttp.tapir" %%% "tapir-json-zio" % versions.tapir
+//      )
+//    )
+//    .jsSettings(
+//      libraryDependencies ++= Seq(
+//        "com.softwaremill.sttp.tapir" %%% "tapir-json-zio" % versions.tapir
+//      )
+//    )
 
 //lazy val root =
 //  project.in(file(".")).aggregate(frontend, backend, shared.js, shared.jvm)

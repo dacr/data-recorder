@@ -16,25 +16,19 @@ object Main extends ZIOAppDefault {
 
   type DataRecorderEnv = DataRecorderService
 
-  val systemEndpoint = endpoint.in("api").in("system").tag("System")
+  import DataRecorderEndPoints.*
 
   val serviceStatusLogic = for {
     dataRecorderService <- ZIO.service[DataRecorderService]
-    serviceStatus <- dataRecorderService.serviceStatus
+    serviceStatus       <- dataRecorderService.serviceStatus
   } yield serviceStatus
 
-  val serviceStatusEndpoint =
-    systemEndpoint
-      .name("Game service status")
-      .summary("Get the game service status")
-      .description("Returns the service status, can also be used as a health check end point for monitoring purposes")
-      .get
-      .in("status")
-      .out(jsonBody[ServiceStatus])
+  val serviceStatusEndpointImpl =
+    serviceStatusEndpoint
       .zServerLogic[DataRecorderEnv](_ => serviceStatusLogic)
 
   val apiRoutes = List(
-    serviceStatusEndpoint
+    serviceStatusEndpointImpl
   )
 
   def apiDocRoutes =
@@ -51,6 +45,6 @@ object Main extends ZIOAppDefault {
   } yield zservice
 
   override def run =
-    webService.provide(DataRecorderServiceLive.layer)
+    webService.provide(DataRecorderService.live)
 
 }
