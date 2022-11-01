@@ -15,14 +15,14 @@ object DataRecorderService {
 
   val backend = FetchBackend()
 
-  def serviceStatus() =
-    val response: Future[Response[Either[Unit,ServiceStatus]]] =
-      SttpClientInterpreter()
-        .toRequestThrowDecodeFailures(serviceStatusEndpoint, baseUri = None)
-        .apply(())
-        .send(backend)
-    //ZIO.fromFuture(response)
-    response
+  val serviceStatusRequest: Request[Either[Unit, ServiceStatus], Any] =
+    SttpClientInterpreter()
+      .toRequestThrowDecodeFailures(serviceStatusEndpoint, baseUri = None)
+      .apply(())
+
+  def serviceStatus():Task[Response[Either[Unit,ServiceStatus]]] =
+    val response = serviceStatusRequest.send(backend)
+    ZIO.fromFuture(implicit ec => response)
 }
 
 object App {
@@ -37,8 +37,11 @@ object App {
     val appContainer = dom.document.querySelector("#app")
     appContainer.innerHTML = ""
 
-    implicit val ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
-    DataRecorderService.serviceStatus().map(res => println(res.body.map(_.version.toString())))
+    Unsafe.unsafe { implicit u =>
+      runtime.unsafe.fork {
+        DataRecorderService.serviceStatus().tap(res => Console.printLine(res.body.map(_.version)))
+      }
+    }
 
     val _ = render(appContainer, root)
   }
