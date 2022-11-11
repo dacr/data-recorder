@@ -1,7 +1,7 @@
 ThisBuild / organization := "fr.janalyse"
 ThisBuild / name         := "data-recorder"
 ThisBuild / homepage     := Some(new URL("https://github.com/dacr/data-recorder"))
-ThisBuild / scalaVersion := "3.2.0"
+ThisBuild / scalaVersion := "3.2.1"
 
 ThisBuild / licenses += "Apache 2" -> url(s"https://www.apache.org/licenses/LICENSE-2.0.txt")
 
@@ -15,12 +15,14 @@ ThisBuild / scmInfo := Some(
 ThisBuild / testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
 
 val versions = new {
-  val zio        = "2.0.2"
+  val zio        = "2.0.3"
   val zioJson    = "0.3.0"
   val ziologging = "2.1.2"
   val logback    = "1.4.4"
 
-  val tapir = "1.1.3"
+  val tapir       = "1.1.4"
+  val sttp        = "1.3.10"
+  val sttpClient3 = "3.8.3"
 
   val laminar = "0.14.5"
   val fetch   = "0.14.4"
@@ -37,11 +39,11 @@ lazy val backend =
         "dev.zio"                     %% "zio-json"                % versions.zioJson,
         "dev.zio"                     %% "zio-logging"             % versions.ziologging,
         "dev.zio"                     %% "zio-logging-slf4j"       % versions.ziologging,
-        "ch.qos.logback"               % "logback-classic"         % versions.logback,
         "com.softwaremill.sttp.tapir" %% "tapir-zio"               % versions.tapir,
         "com.softwaremill.sttp.tapir" %% "tapir-json-zio"          % versions.tapir,
         "com.softwaremill.sttp.tapir" %% "tapir-zio-http-server"   % versions.tapir,
         "com.softwaremill.sttp.tapir" %% "tapir-swagger-ui-bundle" % versions.tapir,
+        "ch.qos.logback"               % "logback-classic"         % versions.logback,
         "dev.zio"                     %% "zio-test"                % versions.zio % Test,
         "dev.zio"                     %% "zio-test-junit"          % versions.zio % Test,
         "dev.zio"                     %% "zio-test-sbt"            % versions.zio % Test,
@@ -74,7 +76,7 @@ lazy val frontend =
         // sttp
         "com.softwaremill.sttp.tapir"   %%% "tapir-sttp-client"         % versions.tapir,
         "com.softwaremill.sttp.tapir"   %%% "tapir-json-zio"            % versions.tapir,
-        "com.softwaremill.sttp.client3" %%% "zio"                       % "3.8.3",
+        "com.softwaremill.sttp.client3" %%% "zio"                       % versions.sttpClient3,
         // laminar
         "com.raquo"                     %%% "laminar"                   % versions.laminar,
         "io.laminext"                   %%% "fetch"                     % versions.fetch
@@ -86,9 +88,10 @@ lazy val sharedDomain =
     .in(file("modules/common"))
     .settings(
       libraryDependencies ++= Seq(
-        "dev.zio"                     %%% "zio-json"          % versions.zioJson,
-        "com.softwaremill.sttp.tapir" %%% "tapir-sttp-client" % versions.tapir,
-        "com.softwaremill.sttp.tapir" %%% "tapir-json-zio"    % versions.tapir
+        "dev.zio"                      %%% "zio-json"          % versions.zioJson,
+        "com.softwaremill.sttp.tapir"  %%% "tapir-sttp-client" % versions.tapir,
+        "com.softwaremill.sttp.shared" %%% "zio"               % versions.sttp,
+        "com.softwaremill.sttp.tapir"  %%% "tapir-json-zio"    % versions.tapir
       )
     )
 //    .jvmSettings(

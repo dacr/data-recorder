@@ -1,10 +1,19 @@
 package fr.janalyse.datarecorder.protocol
 
 import zio.*
-import sttp.tapir.*
+import zio.stream.*
 import sttp.client3.*
+
+import sttp.tapir.*
 import sttp.tapir.json.zio.*
 import sttp.tapir.generic.auto.*
+
+import sttp.capabilities.zio.ZioStreams
+
+import sttp.model.HeaderNames
+
+
+import java.nio.charset.StandardCharsets
 
 object DataRecorderEndPoints {
 
@@ -12,10 +21,18 @@ object DataRecorderEndPoints {
 
   val serviceStatusEndpoint =
     systemEndpoint
-      .name("Game service status")
-      .summary("Get the game service status")
+      .name("Application service status")
+      .summary("Get the application service status")
       .description("Returns the service status, can also be used as a health check end point for monitoring purposes")
-      .get
       .in("status")
+      .get
       .out(jsonBody[ServiceStatus])
+
+  val serviceEventsEndpoint =
+    systemEndpoint
+      .name("Application service events")
+      .summary("Receive application service events")
+      .description("Receive broadcasted application service events")
+      .in("events")
+      .out(webSocketBody[ClientMessage, CodecFormat.Json, ServerMessage, CodecFormat.Json](ZioStreams))
 }
