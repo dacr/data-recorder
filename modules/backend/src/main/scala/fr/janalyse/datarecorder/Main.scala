@@ -47,21 +47,23 @@ object Main extends ZIOAppDefault {
       .toRoutes
 
   // -------------------------------------------------------------------------------------------------------------------
-//  val serviceEventsEndpointLogic =
-//    ZIO.succeed((clientMessageStream: Stream[Throwable, ClientMessage]) =>
-//      ZStream
-//        .tick(500.millis)
-//        .zipWith(ZStream("A", "B", "C", "D").repeat(Schedule.forever))((_, c) => ServerMessage(c))
-//    )
-//
-//  val serviceEventsEndpointImpl =
-//    serviceEventsEndpoint
-//      .zServerLogic[DataRecorderEnv](_ => serviceEventsEndpointLogic)
+  val serviceEventsEndpointLogic =
+    ZIO.succeed((clientMessageStream: Stream[Throwable, ClientMessage]) =>
+      ZStream
+        .tick(500.millis)
+        .zipWith(ZStream("A", "B", "C", "D").repeat(Schedule.forever))((_, c) => ServerMessage(c))
+    )
+
+  val serviceEventsRoutes =
+    ZHttp4sServerInterpreter()
+      .fromWebSocket(serviceEventsEndpoint.zServerLogic[DataRecorderEnv](_ => serviceEventsEndpointLogic))
+      .toRoutes
 
   // -------------------------------------------------------------------------------------------------------------------
   val apiRoutes = List(
     pingEndpoint,
-    serviceStatusEndpoint
+    serviceStatusEndpoint,
+    serviceEventsEndpoint
   )
 
   def swaggerRoutes: HttpRoutes[DataRecorderTask] =
@@ -86,6 +88,7 @@ object Main extends ZIOAppDefault {
           .withExecutionContext(executor.asExecutionContext)
           .bindHttp(8080, "localhost")
           .withHttpApp(Router("/" -> routes).orNotFound)
+          .withHttpWebSocketApp(wsb => Router("/" -> serviceEventsRoutes(wsb)).orNotFound)
           .serve
           .compile
           .drain
@@ -95,6 +98,6 @@ object Main extends ZIOAppDefault {
     serverApp
   }
 
-  override def run = webService.provide(DataRecorderService.live)
+  override def run = webService.provideLayer(DataRecorderService.live)
 
 }

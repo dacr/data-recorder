@@ -11,3 +11,12 @@ frontend-vite:
 	cd modules/frontend && \
 		npm install && \
 		./node_modules/yarn/bin/yarn run vite
+
+test-ping:
+	curl http://127.0.0.1/api/system/ping
+
+test-ws:
+	echo TODO
+
+clean:
+	sbt clean

@@ -19,6 +19,12 @@ object DataRecorderService {
 
   val backend = FetchZioBackend()
 
+  val ping: Task[Response[Either[Unit, String]]] =
+    SttpClientInterpreter()
+      .toRequestThrowDecodeFailures(pingEndpoint, baseUri = None)
+      .apply(())
+      .send(backend)
+
   val serviceStatus: Task[Response[Either[Unit, ServiceStatus]]] =
     SttpClientInterpreter()
       .toRequestThrowDecodeFailures(serviceStatusEndpoint, baseUri = None)
@@ -62,8 +68,8 @@ object App {
 
   def root = div(
     beginStream, // To trigger the onMountCallback for the stream
-    h1("Test"),
-    p("receivent events :"),
+    h1("Test websockets"),
+    p("received events :"),
     children <-- events.signal.map(_.zipWithIndex.reverse).split(_._2) { (_, event, _) =>
       div(event._1)
     }
