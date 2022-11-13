@@ -20,9 +20,10 @@ val versions = new {
   val ziologging = "2.1.2"
   val logback    = "1.4.4"
 
-  val tapir       = "1.1.4"
-  val sttp        = "1.3.10"
+  val tapir       = "1.2.1"
+  val sttp        = "1.3.11"
   val sttpClient3 = "3.8.3"
+  val http4s      = "0.23.12"
 
   val laminar = "0.14.5"
   val fetch   = "0.14.4"
@@ -41,8 +42,9 @@ lazy val backend =
         "dev.zio"                     %% "zio-logging-slf4j"       % versions.ziologging,
         "com.softwaremill.sttp.tapir" %% "tapir-zio"               % versions.tapir,
         "com.softwaremill.sttp.tapir" %% "tapir-json-zio"          % versions.tapir,
-        "com.softwaremill.sttp.tapir" %% "tapir-zio-http-server"   % versions.tapir,
+        "com.softwaremill.sttp.tapir" %% "tapir-http4s-server-zio" % versions.tapir,
         "com.softwaremill.sttp.tapir" %% "tapir-swagger-ui-bundle" % versions.tapir,
+        "org.http4s"                  %% "http4s-blaze-server"     % versions.http4s, // ideally in sync with http4s from tapir-http4s-server-zio dependencies
         "ch.qos.logback"               % "logback-classic"         % versions.logback,
         "dev.zio"                     %% "zio-test"                % versions.zio % Test,
         "dev.zio"                     %% "zio-test-junit"          % versions.zio % Test,

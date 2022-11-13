@@ -19,6 +19,15 @@ object DataRecorderEndPoints {
 
   private val systemEndpoint = endpoint.in("api").in("system").tag("System")
 
+  val pingEndpoint =
+    systemEndpoint
+      .name("Ping application service")
+      .summary("Just get a very simple pong response")
+      .description("Returns pong, this is the faster and simplesdt backend health check")
+      .in("ping")
+      .get
+      .out(stringBody)
+
   val serviceStatusEndpoint =
     systemEndpoint
       .name("Application service status")

@@ -6,19 +6,34 @@ import sttp.capabilities.WebSockets
 import sttp.model.StatusCode
 import sttp.tapir.generic.auto.*
 import sttp.tapir.json.zio.*
-import sttp.tapir.server.ziohttp.ZioHttpInterpreter
+import sttp.tapir.server.http4s.ztapir.ZHttp4sServerInterpreter
 import sttp.tapir.swagger.bundle.SwaggerInterpreter
 import sttp.tapir.ztapir.*
 import zio.*
 import zio.json.*
 import zio.stream.*
+import zio.interop.catz.*
+import cats.syntax.all.*
+import cats.implicits.*
 import sttp.capabilities.zio.ZioStreams
+import org.http4s.*
+import org.http4s.blaze.server.BlazeServerBuilder
+import org.http4s.server.Router
 
 object Main extends ZIOAppDefault {
 
+  import DataRecorderEndPoints.*
+
   type DataRecorderEnv = DataRecorderService
 
-  import DataRecorderEndPoints.*
+  type DataRecorderTask[A] = RIO[DataRecorderEnv, A]
+
+  // -------------------------------------------------------------------------------------------------------------------
+
+  val pingRoutes: HttpRoutes[DataRecorderTask] =
+    ZHttp4sServerInterpreter()
+      .from(pingEndpoint.zServerLogic(_ => ZIO.succeed("pong")))
+      .toRoutes
 
   // -------------------------------------------------------------------------------------------------------------------
   val serviceStatusLogic = for {
@@ -26,45 +41,60 @@ object Main extends ZIOAppDefault {
     serviceStatus       <- dataRecorderService.serviceStatus
   } yield serviceStatus
 
-  val serviceStatusEndpointImpl =
-    serviceStatusEndpoint
-      .zServerLogic[DataRecorderEnv](_ => serviceStatusLogic)
+  val serviceStatusRoutes: HttpRoutes[DataRecorderTask] =
+    ZHttp4sServerInterpreter()
+      .from(serviceStatusEndpoint.zServerLogic[DataRecorderEnv](_ => serviceStatusLogic))
+      .toRoutes
 
   // -------------------------------------------------------------------------------------------------------------------
-  val serviceEventsEndpointLogic =
-    ZIO.succeed((clientMessageStream: Stream[Throwable, ClientMessage]) =>
-      ZStream
-        .tick(500.millis)
-        .zipWith(ZStream("A", "B", "C", "D").repeat(Schedule.forever))((_, c) => ServerMessage(c))
-    )
-
-  val serviceEventsEndpointImpl =
-    serviceEventsEndpoint
-      .zServerLogic[DataRecorderEnv](_ => serviceEventsEndpointLogic)
+//  val serviceEventsEndpointLogic =
+//    ZIO.succeed((clientMessageStream: Stream[Throwable, ClientMessage]) =>
+//      ZStream
+//        .tick(500.millis)
+//        .zipWith(ZStream("A", "B", "C", "D").repeat(Schedule.forever))((_, c) => ServerMessage(c))
+//    )
+//
+//  val serviceEventsEndpointImpl =
+//    serviceEventsEndpoint
+//      .zServerLogic[DataRecorderEnv](_ => serviceEventsEndpointLogic)
 
   // -------------------------------------------------------------------------------------------------------------------
   val apiRoutes = List(
-    serviceStatusEndpointImpl,
-    serviceEventsEndpointImpl
+    pingEndpoint,
+    serviceStatusEndpoint
   )
 
-  def apiDocRoutes =
-    SwaggerInterpreter()
-      .fromServerEndpoints(
-        apiRoutes,
-        Info(title = "ZWORDS Game API", version = "2.0", description = Some("A wordle like game as an API by @BriossantC and @crodav"))
+  def swaggerRoutes: HttpRoutes[DataRecorderTask] =
+    ZHttp4sServerInterpreter()
+      .from(
+        SwaggerInterpreter().fromEndpoints[DataRecorderTask](
+          apiRoutes,
+          Info(title = "ZWORDS Game API", version = "2.0", description = Some("A wordle like game as an API by @BriossantC and @crodav"))
+        )
       )
+      .toRoutes
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  def webService = for {
-    _        <- ZIO.logInfo("Starting webService")
-    routes    = apiRoutes ++ apiDocRoutes
-    httpApp   = ZioHttpInterpreter().toHttp(routes)
-    zservice <- zhttp.service.Server.start(8080, httpApp)
-  } yield zservice
+  def webService = {
+    val routes = pingRoutes <+> serviceStatusRoutes <+> swaggerRoutes
 
-  override def run =
-    webService.provide(DataRecorderService.live)
+    // Starting the server
+    val serverApp: ZIO[DataRecorderEnv, Throwable, Unit] = {
+      ZIO.executor.flatMap(executor =>
+        BlazeServerBuilder[DataRecorderTask]
+          .withExecutionContext(executor.asExecutionContext)
+          .bindHttp(8080, "localhost")
+          .withHttpApp(Router("/" -> routes).orNotFound)
+          .serve
+          .compile
+          .drain
+      )
+    }
+
+    serverApp
+  }
+
+  override def run = webService.provide(DataRecorderService.live)
 
 }
