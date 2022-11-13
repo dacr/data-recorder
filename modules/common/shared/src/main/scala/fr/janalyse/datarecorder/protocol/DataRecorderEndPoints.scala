@@ -12,7 +12,6 @@ import sttp.capabilities.zio.ZioStreams
 
 import sttp.model.HeaderNames
 
-
 import java.nio.charset.StandardCharsets
 
 object DataRecorderEndPoints {
@@ -38,10 +37,14 @@ object DataRecorderEndPoints {
       .out(jsonBody[ServiceStatus])
 
   val serviceEventsEndpoint =
-    systemEndpoint
+    endpoint
+      .in("ws")
+      .in("system")
+      .tag("System")
       .name("Application service events")
       .summary("Receive application service events")
       .description("Receive broadcasted application service events")
       .in("events")
+      .get
       .out(webSocketBody[ClientMessage, CodecFormat.Json, ServerMessage, CodecFormat.Json](ZioStreams))
 }

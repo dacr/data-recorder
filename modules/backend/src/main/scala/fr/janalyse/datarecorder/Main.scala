@@ -87,8 +87,8 @@ object Main extends ZIOAppDefault {
         BlazeServerBuilder[DataRecorderTask]
           .withExecutionContext(executor.asExecutionContext)
           .bindHttp(8080, "localhost")
-          .withHttpApp(Router("/" -> routes).orNotFound)
-          .withHttpWebSocketApp(wsb => Router("/" -> serviceEventsRoutes(wsb)).orNotFound)
+          //.withHttpApp(Router("/" -> routes).orNotFound)
+          .withHttpWebSocketApp(wsb => Router("/" -> (serviceEventsRoutes(wsb) <+> routes)).orNotFound)
           .serve
           .compile
           .drain

@@ -13,6 +13,11 @@ import sttp.client3.impl.zio.FetchZioBackend
 import sttp.client3.*
 import zio.*
 import zio.stream.*
+import sttp.ws.*
+
+//import sttp.tapir.client.sttp.ws.zio.*
+import sttp.tapir.client.sttp.*
+
 
 object DataRecorderService {
   import fr.janalyse.datarecorder.protocol.DataRecorderEndPoints.*
@@ -31,11 +36,11 @@ object DataRecorderService {
       .apply(())
       .send(backend)
 
-  val eventStream: Task[Response[Either[Unit, Stream[Throwable, ClientMessage] => Stream[Throwable, ServerMessage]]]] =
+  val events: Task[Either[Unit, Stream[Throwable, ClientMessage] => Stream[Throwable, ServerMessage]]] =
     SttpClientInterpreter()
-      .toRequestThrowDecodeFailures(serviceEventsEndpoint, baseUri = None)
+      .toClientThrowDecodeFailures(serviceEventsEndpoint, baseUri = Some(uri"ws://127.0.0.1:3000"), backend)
       .apply(())
-      .send(backend)
+      .tapError(err => Console.printLine("===>" + err.toString))
 }
 
 object App {
@@ -47,10 +52,10 @@ object App {
   val beginStream: Modifier[Element] = onMountCallback { _ =>
     Unsafe.unsafe { implicit u =>
       runtime.unsafe.fork {
-        DataRecorderService.eventStream
-          .retry(Schedule.spaced(1.second))
+        DataRecorderService.events
+          .retry(Schedule.spaced(5.second))
           .map { response =>
-            response.body match {
+            response match {
               case Left(err)      => Console.printLine("Can't establish websocket")
               case Right(fromFct) =>
                 val inputStream  = ZStream.empty

@@ -13,7 +13,7 @@ frontend-vite:
 		./node_modules/yarn/bin/yarn run vite
 
 test-ping:
-	curl http://127.0.0.1/api/system/ping
+	curl http://127.0.0.1:8080/api/system/ping
 
 test-ws:
 	echo TODO
