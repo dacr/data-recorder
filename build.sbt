@@ -14,15 +14,19 @@ ThisBuild / scmInfo := Some(
 
 ThisBuild / testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
 
+// WARNING TAKE CARE OF GLOBAL COHERENCY IN PARTICULAR WITH SCALA.JS WITH ZIO SUB-DEPENDENCIES
+// TO AVOID SUCH ERRORS : Referring to non-existent method zio.VersionSpecific$$anon$1.apply(java.lang.Object)java.lang.Object
+// https://www.scala-js.org/doc/project/linking-errors.html
 val versions = new {
-  val zio        = "2.0.3"
+  val zio        = "2.0.2"
   val zioJson    = "0.3.0"
-  val ziologging = "2.1.2"
+  val ziologging = "2.1.3"
   val logback    = "1.4.4"
 
-  val tapir       = "1.1.4"
+  val tapir       = "1.2.1"
   val sttp        = "1.3.10"
   val sttpClient3 = "3.8.3"
+  val http4s      = "0.23.12"
 
   val laminar = "0.14.5"
   val fetch   = "0.14.4"
@@ -41,8 +45,9 @@ lazy val backend =
         "dev.zio"                     %% "zio-logging-slf4j"       % versions.ziologging,
         "com.softwaremill.sttp.tapir" %% "tapir-zio"               % versions.tapir,
         "com.softwaremill.sttp.tapir" %% "tapir-json-zio"          % versions.tapir,
-        "com.softwaremill.sttp.tapir" %% "tapir-zio-http-server"   % versions.tapir,
+        "com.softwaremill.sttp.tapir" %% "tapir-http4s-server-zio" % versions.tapir,
         "com.softwaremill.sttp.tapir" %% "tapir-swagger-ui-bundle" % versions.tapir,
+        "org.http4s"                  %% "http4s-blaze-server"     % versions.http4s, // ideally in sync with http4s from tapir-http4s-server-zio dependencies
         "ch.qos.logback"               % "logback-classic"         % versions.logback,
         "dev.zio"                     %% "zio-test"                % versions.zio % Test,
         "dev.zio"                     %% "zio-test-junit"          % versions.zio % Test,
@@ -66,8 +71,8 @@ lazy val frontend =
       },
       scalaJSUseMainModuleInitializer := true,
       libraryDependencies ++= Seq(
-        "io.github.cquiroz"             %%% "scala-java-time"           % "2.3.0",
-        "io.github.cquiroz"             %%% "scala-java-time-tzdb"      % "2.3.0",
+        "io.github.cquiroz"             %%% "scala-java-time"           % "2.4.0",
+        "io.github.cquiroz"             %%% "scala-java-time-tzdb"      % "2.4.0",
         "org.scala-js"                  %%% "scalajs-java-securerandom" % "1.0.0" cross CrossVersion.for3Use2_13,
         // zio
         "dev.zio"                       %%% "zio"                       % versions.zio,
@@ -90,8 +95,8 @@ lazy val sharedDomain =
       libraryDependencies ++= Seq(
         "dev.zio"                      %%% "zio-json"          % versions.zioJson,
         "com.softwaremill.sttp.tapir"  %%% "tapir-sttp-client" % versions.tapir,
-        "com.softwaremill.sttp.shared" %%% "zio"               % versions.sttp,
-        "com.softwaremill.sttp.tapir"  %%% "tapir-json-zio"    % versions.tapir
+        "com.softwaremill.sttp.tapir"  %%% "tapir-json-zio"    % versions.tapir,
+        "com.softwaremill.sttp.shared" %%% "zio"               % versions.sttp
       )
     )
 //    .jvmSettings(
