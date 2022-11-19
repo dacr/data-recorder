@@ -40,11 +40,10 @@ object DataRecorderEndPoints {
     endpoint
       .in("ws")
       .in("system")
+      .in("events")
       .tag("System")
       .name("Application service events")
       .summary("Receive application service events")
       .description("Receive broadcasted application service events")
-      .in("events")
-      .get
       .out(webSocketBody[ClientMessage, CodecFormat.Json, ServerMessage, CodecFormat.Json](ZioStreams))
 }

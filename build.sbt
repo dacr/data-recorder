@@ -23,7 +23,7 @@ val versions = new {
   val ziologging = "2.1.3"
   val logback    = "1.4.4"
 
-  val tapir       = "1.2.1"
+  val tapir       = "1.2.2"
   val sttp        = "1.3.10"
   val sttpClient3 = "3.8.3"
   val http4s      = "0.23.12"
