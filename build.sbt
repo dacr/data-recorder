@@ -14,22 +14,21 @@ ThisBuild / scmInfo := Some(
 
 ThisBuild / testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
 
-// WARNING TAKE CARE OF GLOBAL COHERENCY IN PARTICULAR WITH SCALA.JS WITH ZIO SUB-DEPENDENCIES
-// TO AVOID SUCH ERRORS : Referring to non-existent method zio.VersionSpecific$$anon$1.apply(java.lang.Object)java.lang.Object
-// https://www.scala-js.org/doc/project/linking-errors.html
 val versions = new {
-  val zio        = "2.0.2"
-  val zioJson    = "0.3.0"
-  val ziologging = "2.1.3"
-  val logback    = "1.4.4"
+  val zio        = "2.0.5"
+  val zioJson    = "0.4.2"
+  val ziologging = "2.1.5"
+  val logback    = "1.4.5"
 
-  val tapir       = "1.2.2"
-  val sttp        = "1.3.10"
-  val sttpClient3 = "3.8.3"
-  val http4s      = "0.23.12"
+  val tapir          = "1.2.3"
+  val sttp           = "1.3.12"
+  val sttpClient3ZIO = "3.8.5"
+  val http4s         = "0.23.12"
 
   val laminar = "0.14.5"
   val fetch   = "0.14.4"
+
+  //val sapui5 = ""
 }
 
 lazy val backend =
@@ -71,8 +70,8 @@ lazy val frontend =
       },
       scalaJSUseMainModuleInitializer := true,
       libraryDependencies ++= Seq(
-        "io.github.cquiroz"             %%% "scala-java-time"           % "2.4.0",
-        "io.github.cquiroz"             %%% "scala-java-time-tzdb"      % "2.4.0",
+        "io.github.cquiroz"             %%% "scala-java-time"           % "2.5.0",
+        "io.github.cquiroz"             %%% "scala-java-time-tzdb"      % "2.5.0",
         "org.scala-js"                  %%% "scalajs-java-securerandom" % "1.0.0" cross CrossVersion.for3Use2_13,
         // zio
         "dev.zio"                       %%% "zio"                       % versions.zio,
@@ -81,10 +80,12 @@ lazy val frontend =
         // sttp
         "com.softwaremill.sttp.tapir"   %%% "tapir-sttp-client"         % versions.tapir,
         "com.softwaremill.sttp.tapir"   %%% "tapir-json-zio"            % versions.tapir,
-        "com.softwaremill.sttp.client3" %%% "zio"                       % versions.sttpClient3,
+        "com.softwaremill.sttp.client3" %%% "zio"                       % versions.sttpClient3ZIO,
         // laminar
         "com.raquo"                     %%% "laminar"                   % versions.laminar,
-        "io.laminext"                   %%% "fetch"                     % versions.fetch
+        "io.laminext"                   %%% "fetch"                     % versions.fetch,
+        // SAP ui5 web-components library
+        //"be.doeraene" %%% "web-components-ui5" % versions.sapui5
       )
     )
 

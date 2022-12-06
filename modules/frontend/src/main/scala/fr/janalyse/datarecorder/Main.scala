@@ -38,7 +38,7 @@ object DataRecorderService {
 
   val events: Task[Either[Unit, Stream[Throwable, ClientMessage] => Stream[Throwable, ServerMessage]]] =
     SttpClientInterpreter()
-      .toClientThrowDecodeFailures(serviceEventsEndpoint, baseUri = Some(uri"ws://127.0.0.1:3000"), backend)
+      .toClientThrowDecodeFailures(serviceEventsEndpoint, baseUri = Some(uri"ws://127.0.0.1:3000/"), backend)
       .apply(())
       .tapError(err => Console.printLine("===>" + err.toString))
 }
