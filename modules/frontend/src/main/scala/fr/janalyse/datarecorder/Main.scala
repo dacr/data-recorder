@@ -45,12 +45,12 @@ object DataRecorderService {
 
 object App {
 
-  val sttpBackend = FetchZioBackend()
   val runtime = zio.Runtime.default
 
   val events: Var[Vector[String]] = Var(Vector.empty)
 
 
+  val backend = FetchZioBackend()
 
   def processWebsocket(ws: WebSocket[Task]):Task[Unit] = {
     val receiveOne = ws.receiveText().flatMap(res => Console.printLine(s"received $res"))
@@ -65,7 +65,7 @@ object App {
 
     val response =
       request
-        .send(sttpBackend)
+        .send(backend)
 
     Unsafe.unsafe { implicit u =>
       runtime.unsafe.fork {
@@ -75,6 +75,7 @@ object App {
       }
     }
   }
+
 
 
 

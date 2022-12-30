@@ -11,34 +11,27 @@
 // ---------------------
 //> using scala  "3.2.1"
 //> using lib "dev.zio::zio:2.0.5"
-//> using lib "fr.janalyse::zio-worksheet:2.0.4.0"
 //> using lib "com.softwaremill.sttp.client3::zio:3.8.5"
 // ---------------------
 
-import zio.*, zio.worksheet.*
-import sttp.client3.*, sttp.client3.basicRequest.*
-import sttp.client3.httpclient.zio.HttpClientZioBackend
-import sttp.ws.*
+import zio.*
+import sttp.client3.*, sttp.client3.basicRequest.*, sttp.ws.*
 
-def processWebsocket(ws: WebSocket[Task]): Task[Unit] = {
-  val receiveOne = ws.receiveText().flatMap(res => Console.printLine(s"received $res"))
-  val sendOne = Console.readLine.flatMap(line => ws.sendText(s"""{"message":"$line"}"""))
-  receiveOne.forever.race(sendOne.forever)
-}
+object WebSocketCat extends ZIOAppDefault {
+  def processWebsocket(ws: WebSocket[Task]): Task[Unit] = {
+    val receiveOne = ws.receiveText().flatMap(res => Console.printLine(s"received $res"))
+    val sendOne    = Console.readLine.flatMap(line => ws.sendText(s"""{"message":"$line"}"""))
+    receiveOne.forever.race(sendOne.forever)
+  }
 
-def run(): Unit = {
-  val request =
-    basicRequest
-      .get(uri"ws://127.0.0.1:3000/ws/system/events")
-      .response(asWebSocket(processWebsocket))
-
-  val logic =
+  def run =
     for {
-      backend <- HttpClientZioBackend()
-      response <- request.send(backend)
+      backend  <- sttp.client3.httpclient.zio.HttpClientZioBackend()
+      response <- basicRequest
+                    .get(uri"ws://127.0.0.1:3000/ws/system/events")
+                    .response(asWebSocket(processWebsocket))
+                    .send(backend)
     } yield response
-
-  logic.unsafeRun
 }
 
-run()
+WebSocketCat.main(Array.empty)
