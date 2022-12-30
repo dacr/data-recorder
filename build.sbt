@@ -18,15 +18,15 @@ ThisBuild / testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
 // TO AVOID SUCH ERRORS : Referring to non-existent method zio.VersionSpecific$$anon$1.apply(java.lang.Object)java.lang.Object
 // https://www.scala-js.org/doc/project/linking-errors.html
 val versions = new {
-  val zio        = "2.0.2"
-  val zioJson    = "0.3.0"
-  val ziologging = "2.1.3"
-  val logback    = "1.4.4"
+  val zio        = "2.0.5"
+  val zioJson    = "0.4.2"
+  val ziologging = "2.1.7"
+  val logback    = "1.4.5"
 
-  val tapir       = "1.2.1"
-  val sttp        = "1.3.10"
-  val sttpClient3 = "3.8.3"
-  val http4s      = "0.23.12"
+  val tapir       = "1.2.4"
+  val sttp        = "1.3.12"
+  val sttpClient3 = "3.8.5"
+  val http4s      = "0.23.13"
 
   val laminar = "0.14.5"
   val fetch   = "0.14.4"
@@ -71,8 +71,8 @@ lazy val frontend =
       },
       scalaJSUseMainModuleInitializer := true,
       libraryDependencies ++= Seq(
-        "io.github.cquiroz"             %%% "scala-java-time"           % "2.4.0",
-        "io.github.cquiroz"             %%% "scala-java-time-tzdb"      % "2.4.0",
+        "io.github.cquiroz"             %%% "scala-java-time"           % "2.5.0",
+        "io.github.cquiroz"             %%% "scala-java-time-tzdb"      % "2.5.0",
         "org.scala-js"                  %%% "scalajs-java-securerandom" % "1.0.0" cross CrossVersion.for3Use2_13,
         // zio
         "dev.zio"                       %%% "zio"                       % versions.zio,

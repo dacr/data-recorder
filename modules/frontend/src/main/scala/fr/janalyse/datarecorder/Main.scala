@@ -45,9 +45,38 @@ object DataRecorderService {
 
 object App {
 
+  val sttpBackend = FetchZioBackend()
   val runtime = zio.Runtime.default
 
   val events: Var[Vector[String]] = Var(Vector.empty)
+
+
+
+  def processWebsocket(ws: WebSocket[Task]):Task[Unit] = {
+    val receiveOne = ws.receiveText().flatMap(res => Console.printLine(s"received $res"))
+    receiveOne.forever
+  }
+
+  def byHandWebsocketCall() = {
+    val request =
+      basicRequest
+        .get(uri"ws://127.0.0.1:3000/ws/system/events")
+        .response(asWebSocket(processWebsocket))
+
+    val response =
+      request
+        .send(sttpBackend)
+
+    Unsafe.unsafe { implicit u =>
+      runtime.unsafe.fork {
+         response
+           .tap(result => Console.printLine(result.toString))
+           .tapError(err => Console.printLine(s"--------> $err"))
+      }
+    }
+  }
+
+
 
   val beginStream: Modifier[Element] = onMountCallback { _ =>
     Unsafe.unsafe { implicit u =>
@@ -83,6 +112,8 @@ object App {
   def initialize(onEvent: Event): Unit = {
     val appContainer = dom.document.querySelector("#app")
     appContainer.innerHTML = ""
+
+    byHandWebsocketCall()
 
     Unsafe.unsafe { implicit u =>
       runtime.unsafe.fork {
