@@ -1,21 +1,14 @@
 package fr.janalyse.datarecorder
 
 import fr.janalyse.datarecorder.protocol.*
-import sttp.apispec.openapi.Info
 import sttp.capabilities.WebSockets
 import sttp.model.StatusCode
-import sttp.tapir.generic.auto.*
 import sttp.tapir.json.zio.*
 import sttp.tapir.server.http4s.ztapir.ZHttp4sServerInterpreter
-import sttp.tapir.swagger.bundle.SwaggerInterpreter
 import sttp.tapir.ztapir.*
 import zio.*
 import zio.json.*
 import zio.stream.*
-import zio.interop.catz.*
-import cats.syntax.all.*
-import cats.implicits.*
-import sttp.capabilities.zio.ZioStreams
 import org.http4s.*
 import org.http4s.blaze.server.BlazeServerBuilder
 import org.http4s.server.Router
@@ -61,7 +54,9 @@ object Main extends ZIOAppDefault {
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  def swaggerRoutes: HttpRoutes[DataRecorderTask] =
+  def swaggerRoutes: HttpRoutes[DataRecorderTask] = {
+    import sttp.tapir.swagger.bundle.SwaggerInterpreter
+    import sttp.apispec.openapi.Info
     ZHttp4sServerInterpreter()
       .from(
         SwaggerInterpreter().fromEndpoints[DataRecorderTask](
@@ -70,10 +65,37 @@ object Main extends ZIOAppDefault {
         )
       )
       .toRoutes
+  }
+
+  //def asyncapiRoute: HttpRoutes[DataRecorderTask] = {
+  val docs = {
+    import sttp.tapir.docs.asyncapi.AsyncAPIInterpreter
+    import sttp.apispec.asyncapi.Info
+    import sttp.tapir.generic.auto._
+    //import sttp.tapir.json.circe._
+    import io.circe.generic.auto._
+
+    val docs = AsyncAPIInterpreter().toAsyncAPI(
+      apiEndpoints,
+      Info(title = "DATA RECORDER API", version = "1.0.0", description = Some("Data recorder by @crodav"))
+    )
+
+    import sttp.apispec.asyncapi.circe.yaml._
+
+    println(docs.toYaml)
+
+    //ZHttp4sServerInterpreter().from(docs)
+    docs
+  }
 
   // -------------------------------------------------------------------------------------------------------------------
 
   def webService = {
+    import zio.interop.catz.*
+    import cats.syntax.all.*
+    import cats.implicits.*
+
+    //val routes = pingRoutes <+> serviceStatusRoutes <+> asyncapiRoute
     val routes = pingRoutes <+> serviceStatusRoutes <+> swaggerRoutes
 
     // Starting the server
@@ -82,7 +104,7 @@ object Main extends ZIOAppDefault {
         BlazeServerBuilder[DataRecorderTask]
           .withExecutionContext(executor.asExecutionContext)
           .bindHttp(8080, "localhost")
-          //.withHttpApp(Router("/" -> routes).orNotFound)
+          // .withHttpApp(Router("/" -> routes).orNotFound)
           .withHttpWebSocketApp(wsb => Router("/" -> (serviceEventsRoutes(wsb) <+> routes)).orNotFound)
           .serve
           .compile

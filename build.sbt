@@ -40,21 +40,23 @@ lazy val backend =
     .dependsOn(sharedDomain.jvm)
     .settings(
       libraryDependencies ++= Seq(
-        "dev.zio"                     %% "zio"                     % versions.zio,
-        "dev.zio"                     %% "zio-streams"             % versions.zio,
-        "dev.zio"                     %% "zio-json"                % versions.zioJson,
-        "dev.zio"                     %% "zio-logging"             % versions.ziologging,
-        "dev.zio"                     %% "zio-logging-slf4j"       % versions.ziologging,
-        "com.softwaremill.sttp.tapir" %% "tapir-zio"               % versions.tapir,
-        "com.softwaremill.sttp.tapir" %% "tapir-json-zio"          % versions.tapir,
-        "com.softwaremill.sttp.tapir" %% "tapir-http4s-server-zio" % versions.tapir,
-        "com.softwaremill.sttp.tapir" %% "tapir-swagger-ui-bundle" % versions.tapir,
-        "org.http4s"                  %% "http4s-blaze-server"     % versions.http4s, // ideally in sync with http4s from tapir-http4s-server-zio dependencies
-        "ch.qos.logback"               % "logback-classic"         % versions.logback,
-        "dev.zio"                     %% "zio-test"                % versions.zio % Test,
-        "dev.zio"                     %% "zio-test-junit"          % versions.zio % Test,
-        "dev.zio"                     %% "zio-test-sbt"            % versions.zio % Test,
-        "dev.zio"                     %% "zio-test-scalacheck"     % versions.zio % Test
+        "dev.zio"                       %% "zio"                     % versions.zio,
+        "dev.zio"                       %% "zio-streams"             % versions.zio,
+        "dev.zio"                       %% "zio-json"                % versions.zioJson,
+        "dev.zio"                       %% "zio-logging"             % versions.ziologging,
+        "dev.zio"                       %% "zio-logging-slf4j"       % versions.ziologging,
+        "com.softwaremill.sttp.tapir"   %% "tapir-zio"               % versions.tapir,
+        "com.softwaremill.sttp.tapir"   %% "tapir-json-zio"          % versions.tapir,
+        "com.softwaremill.sttp.tapir"   %% "tapir-http4s-server-zio" % versions.tapir,
+        "com.softwaremill.sttp.tapir"   %% "tapir-swagger-ui-bundle" % versions.tapir,
+        "com.softwaremill.sttp.tapir"   %% "tapir-asyncapi-docs"     % versions.tapir,
+        "com.softwaremill.sttp.apispec" %% "asyncapi-circe-yaml"     % "0.3.1",
+        "org.http4s"                    %% "http4s-blaze-server"     % versions.http4s, // ideally in sync with http4s from tapir-http4s-server-zio dependencies
+        "ch.qos.logback"                 % "logback-classic"         % versions.logback,
+        "dev.zio"                       %% "zio-test"                % versions.zio % Test,
+        "dev.zio"                       %% "zio-test-junit"          % versions.zio % Test,
+        "dev.zio"                       %% "zio-test-sbt"            % versions.zio % Test,
+        "dev.zio"                       %% "zio-test-scalacheck"     % versions.zio % Test
       )
     )
 
@@ -62,7 +64,7 @@ lazy val frontend =
   project
     .in(file("modules/frontend"))
     .enablePlugins(ScalaJSPlugin)
-    //.enablePlugins(ScalablyTypedConverterPlugin)
+    // .enablePlugins(ScalablyTypedConverterPlugin)
     .dependsOn(sharedDomain.js)
     .settings(
       scalaJSLinkerConfig ~= {

@@ -74,7 +74,7 @@ object DataRecorderEndPoints {
     recorderEndpoint
       .name("Create an anonymous recorder")
       .summary("Create an anonymous data recorder with limited life time")
-      .description("Returns the recorder identifier as well as URLs to be used for both read and write operations")
+      .description("Returns the recorder identifier as well as URLs to be used for both read and write operations, a webhook endpoint is created.")
       .post
       .out(jsonBody[Recorder])
 
