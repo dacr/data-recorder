@@ -32,7 +32,7 @@ object Main extends ZIOAppDefault {
 
   val pingRoutes: HttpRoutes[DataRecorderTask] =
     ZHttp4sServerInterpreter()
-      .from(pingEndpoint.zServerLogic(_ => ZIO.succeed("pong")))
+      .from(systemPingEndpoint.zServerLogic(_ => ZIO.succeed("pong")))
       .toRoutes
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -43,7 +43,7 @@ object Main extends ZIOAppDefault {
 
   val serviceStatusRoutes: HttpRoutes[DataRecorderTask] =
     ZHttp4sServerInterpreter()
-      .from(serviceStatusEndpoint.zServerLogic[DataRecorderEnv](_ => serviceStatusLogic))
+      .from(systemStatusEndpoint.zServerLogic[DataRecorderEnv](_ => serviceStatusLogic))
       .toRoutes
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -60,18 +60,13 @@ object Main extends ZIOAppDefault {
       .toRoutes
 
   // -------------------------------------------------------------------------------------------------------------------
-  val apiRoutes = List(
-    pingEndpoint,
-    serviceStatusEndpoint,
-    serviceEventsEndpoint
-  )
 
   def swaggerRoutes: HttpRoutes[DataRecorderTask] =
     ZHttp4sServerInterpreter()
       .from(
         SwaggerInterpreter().fromEndpoints[DataRecorderTask](
-          apiRoutes,
-          Info(title = "ZWORDS Game API", version = "2.0", description = Some("A wordle like game as an API by @BriossantC and @crodav"))
+          apiEndpoints,
+          Info(title = "DATA RECORDER API", version = "1.0.0", description = Some("Data recorder by @crodav"))
         )
       )
       .toRoutes

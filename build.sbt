@@ -25,11 +25,13 @@ val versions = new {
 
   val tapir       = "1.2.4"
   val sttp        = "1.3.12"
-  val sttpClient3 = "3.8.5"
+  val sttpClient3 = "3.8.6"
   val http4s      = "0.23.13"
 
   val laminar = "0.14.5"
   val fetch   = "0.14.4"
+
+  // val sapui5 = ""
 }
 
 lazy val backend =
@@ -60,6 +62,7 @@ lazy val frontend =
   project
     .in(file("modules/frontend"))
     .enablePlugins(ScalaJSPlugin)
+    //.enablePlugins(ScalablyTypedConverterPlugin)
     .dependsOn(sharedDomain.js)
     .settings(
       scalaJSLinkerConfig ~= {

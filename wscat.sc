@@ -11,13 +11,16 @@
 // ---------------------
 //> using scala  "3.2.1"
 //> using lib "dev.zio::zio:2.0.5"
-//> using lib "com.softwaremill.sttp.client3::zio:3.8.5"
+//> using lib "com.softwaremill.sttp.client3::zio:3.8.6"
 // ---------------------
 
 import zio.*
 import sttp.client3.*, sttp.client3.basicRequest.*, sttp.ws.*
 
 object WebSocketCat extends ZIOAppDefault {
+
+  val target = uri"ws://127.0.0.1:3000/ws/system/events"
+
   def processWebsocket(ws: WebSocket[Task]): Task[Unit] = {
     val receiveOne = ws.receiveText().flatMap(res => Console.printLine(s"received $res"))
     val sendOne    = Console.readLine.flatMap(line => ws.sendText(s"""{"message":"$line"}"""))
@@ -28,9 +31,9 @@ object WebSocketCat extends ZIOAppDefault {
     for {
       backend  <- sttp.client3.httpclient.zio.HttpClientZioBackend()
       response <- basicRequest
-                    .get(uri"ws://127.0.0.1:3000/ws/system/events")
-                    .response(asWebSocket(processWebsocket))
-                    .send(backend)
+        .get(target)
+        .response(asWebSocket(processWebsocket))
+        .send(backend)
     } yield response
 }
 

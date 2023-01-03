@@ -26,13 +26,13 @@ object DataRecorderService {
 
   val ping: Task[Response[Either[Unit, String]]] =
     SttpClientInterpreter()
-      .toRequestThrowDecodeFailures(pingEndpoint, baseUri = None)
+      .toRequestThrowDecodeFailures(systemPingEndpoint, baseUri = None)
       .apply(())
       .send(backend)
 
   val serviceStatus: Task[Response[Either[Unit, ServiceStatus]]] =
     SttpClientInterpreter()
-      .toRequestThrowDecodeFailures(serviceStatusEndpoint, baseUri = None)
+      .toRequestThrowDecodeFailures(systemStatusEndpoint, baseUri = None)
       .apply(())
       .send(backend)
 
@@ -61,7 +61,7 @@ object App {
     val request =
       basicRequest
         .get(uri"ws://127.0.0.1:3000/ws/system/events")
-        .response(asWebSocket(processWebsocket))
+        .response(asWebSocketAlways(processWebsocket))
 
     val response =
       request
@@ -114,7 +114,7 @@ object App {
     val appContainer = dom.document.querySelector("#app")
     appContainer.innerHTML = ""
 
-    byHandWebsocketCall()
+    //byHandWebsocketCall()
 
     Unsafe.unsafe { implicit u =>
       runtime.unsafe.fork {
