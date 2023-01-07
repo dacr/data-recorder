@@ -7,6 +7,7 @@ import org.scalajs.dom
 import fr.janalyse.datarecorder.protocol.*
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom.Event
+import sttp.capabilities
 import sttp.tapir.client.sttp.SttpClientInterpreter
 import sttp.capabilities.zio.ZioStreams
 import sttp.client3.impl.zio.FetchZioBackend
@@ -18,11 +19,10 @@ import sttp.ws.*
 //import sttp.tapir.client.sttp.ws.zio.*
 import sttp.tapir.client.sttp.*
 
+type Backend = SttpBackend[Task, ZioStreams & capabilities.WebSockets]
 
-object DataRecorderService {
+case class DataRecorderService(backend: Backend) {
   import fr.janalyse.datarecorder.protocol.DataRecorderEndPoints.*
-
-  val backend = FetchZioBackend()
 
   val ping: Task[Response[Either[Unit, String]]] =
     SttpClientInterpreter()
@@ -52,6 +52,8 @@ object App {
 
   val backend = FetchZioBackend()
 
+  val dataRecorderService = DataRecorderService(backend)
+
   def processWebsocket(ws: WebSocket[Task]):Task[Unit] = {
     val receiveOne = ws.receiveText().flatMap(res => Console.printLine(s"received $res"))
     receiveOne.forever
@@ -61,7 +63,8 @@ object App {
     val request =
       basicRequest
         .get(uri"ws://127.0.0.1:3000/ws/system/events")
-        .response(asWebSocketAlways(processWebsocket))
+        //.response(asWebSocketAlways(processWebsocket))
+        .response(asWebSocket(processWebsocket))
 
     val response =
       request
@@ -82,7 +85,7 @@ object App {
   val beginStream: Modifier[Element] = onMountCallback { _ =>
     Unsafe.unsafe { implicit u =>
       runtime.unsafe.fork {
-        DataRecorderService.events
+        dataRecorderService.events
           .retry(Schedule.spaced(5.second))
           .map { response =>
             response match {
@@ -114,12 +117,12 @@ object App {
     val appContainer = dom.document.querySelector("#app")
     appContainer.innerHTML = ""
 
-    //byHandWebsocketCall()
+    byHandWebsocketCall()
 
     Unsafe.unsafe { implicit u =>
       runtime.unsafe.fork {
         ZIO.succeed(events.update(_.appended("init"))) *>
-          DataRecorderService.serviceStatus.tap(res => Console.printLine(res.body.map(_.version)))
+          dataRecorderService.serviceStatus.tap(res => Console.printLine(res.body.map(_.version)))
       }
     }
 

@@ -10,3 +10,21 @@ case class UnknownRecorderError(
 object UnknownRecorderError {
   given JsonCodec[UnknownRecorderError] = DeriveJsonCodec.gen
 }
+
+case class UnknownWebsocketError(
+  recorderUUID: UUID,
+  websocketUUID: UUID
+)
+
+object UnknownWebsocketError {
+  given JsonCodec[UnknownWebsocketError] = DeriveJsonCodec.gen
+}
+
+case class UnknownWebhookError(
+  recorderUUID: UUID,
+  webhookUUID: UUID
+)
+
+object UnknownWebhookError {
+  given JsonCodec[UnknownWebhookError] = DeriveJsonCodec.gen
+}

@@ -25,7 +25,7 @@ val versions = new {
 
   val tapir       = "1.2.4"
   val sttp        = "1.3.12"
-  val sttpClient3 = "3.8.6"
+  val sttpClient3 = "3.8.7"
   val http4s      = "0.23.13"
 
   val laminar = "0.14.5"
