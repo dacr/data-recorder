@@ -43,7 +43,7 @@ object Main extends ZIOAppDefault {
   val serviceEventsEndpointLogic =
     ZIO.succeed((clientMessageStream: Stream[Throwable, ClientMessage]) =>
       ZStream
-        .tick(500.millis)
+        .tick(2.seconds)
         .zipWith(ZStream("A", "B", "C", "D").repeat(Schedule.forever))((_, c) => ServerMessage(c))
     )
 
