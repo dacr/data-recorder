@@ -23,9 +23,9 @@ val versions = new {
   val ziologging = "2.1.7"
   val logback    = "1.4.5"
 
-  val tapir       = "1.2.4"
+  val tapir       = "1.2.5"
   val sttp        = "1.3.12"
-  val sttpClient3 = "3.8.7"
+  val sttpClient3 = "3.8.8"
   val http4s      = "0.23.13"
 
   val laminar = "0.14.5"
@@ -84,6 +84,7 @@ lazy val frontend =
         "dev.zio"                       %%% "zio-streams"               % versions.zio,
         "dev.zio"                       %%% "zio-json"                  % versions.zioJson,
         // sttp
+        "com.softwaremill.sttp.client3" %%% "core"                       % versions.sttpClient3,
         "com.softwaremill.sttp.tapir"   %%% "tapir-sttp-client"         % versions.tapir,
         "com.softwaremill.sttp.tapir"   %%% "tapir-json-zio"            % versions.tapir,
         "com.softwaremill.sttp.client3" %%% "zio"                       % versions.sttpClient3,

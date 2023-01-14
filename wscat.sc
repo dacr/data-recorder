@@ -11,7 +11,7 @@
 // ---------------------
 //> using scala  "3.2.1"
 //> using lib "dev.zio::zio:2.0.5"
-//> using lib "com.softwaremill.sttp.client3::zio:3.8.6"
+//> using lib "com.softwaremill.sttp.client3::zio:3.8.7"
 // ---------------------
 
 import zio.*

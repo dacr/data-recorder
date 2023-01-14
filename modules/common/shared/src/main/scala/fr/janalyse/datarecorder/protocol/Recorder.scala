@@ -10,7 +10,8 @@ case class Recorder(
   webhookURL: String,
   readURL: String,
   expireDate: Option[OffsetDateTime],
-  owner: Option[User]
+  owner: Option[User],
+  secretToken: String // Mandatory in order to to get access to recorder data
 )
 
 object Recorder {

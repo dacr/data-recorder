@@ -27,7 +27,6 @@ object DataRecorderEndPoints {
       .summary("Receive application service events")
       .description("Receive broadcasted application service events")
       .out(webSocketBody[ClientMessage, CodecFormat.Json, ServerMessage, CodecFormat.Json](ZioStreams))
-      // .out(statusCode(StatusCode.SwitchingProtocols)) // not needed, this is the default with webSocketbody
       .get
       .in("ws")
       .in("system")
@@ -126,6 +125,8 @@ object DataRecorderEndPoints {
       .in(pathRecorderUUID)
       .in("websocket")
 
+  // -------------------------------------------------------------------------------------------------------------------
+
   val echoesDataGetEndpoint =
     echoesEndpoint
       .name("Get recorded data")
@@ -133,6 +134,7 @@ object DataRecorderEndPoints {
       .description("Returns a stream of all recorded data in chronological order")
       .get
       .errorOut(oneOf(statusForUnknownRecorderIssue))
+    // TODO add secret token
 
   // -------------------------------------------------------------------------------------------------------------------
 
