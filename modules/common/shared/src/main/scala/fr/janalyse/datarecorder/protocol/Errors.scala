@@ -3,28 +3,43 @@ package fr.janalyse.datarecorder.protocol
 import zio.json.*
 import java.util.UUID
 
-case class UnknownRecorderError(
+case class ErrorUnknownRecorder(
   recorderUUID: UUID
 )
 
-object UnknownRecorderError {
-  given JsonCodec[UnknownRecorderError] = DeriveJsonCodec.gen
+object ErrorUnknownRecorder {
+  given JsonCodec[ErrorUnknownRecorder] = DeriveJsonCodec.gen
 }
 
-case class UnknownWebsocketError(
+case class ErrorForbiddenRecorder(
+  recorderUUID: UUID
+)
+
+object ErrorForbiddenRecorder {
+  given JsonCodec[ErrorForbiddenRecorder] = DeriveJsonCodec.gen
+}
+
+case class ErrorExpiredRecorder(
+  recorderUUID: UUID
+)
+object ErrorExpiredRecorder   {
+  given JsonCodec[ErrorExpiredRecorder] = DeriveJsonCodec.gen
+}
+
+case class ErrorUnknownWebsocket(
   recorderUUID: UUID,
   websocketUUID: UUID
 )
 
-object UnknownWebsocketError {
-  given JsonCodec[UnknownWebsocketError] = DeriveJsonCodec.gen
+object ErrorUnknownWebsocket {
+  given JsonCodec[ErrorUnknownWebsocket] = DeriveJsonCodec.gen
 }
 
-case class UnknownWebhookError(
+case class ErrorUnknownWebhook(
   recorderUUID: UUID,
   webhookUUID: UUID
 )
 
-object UnknownWebhookError {
-  given JsonCodec[UnknownWebhookError] = DeriveJsonCodec.gen
+object ErrorUnknownWebhook {
+  given JsonCodec[ErrorUnknownWebhook] = DeriveJsonCodec.gen
 }

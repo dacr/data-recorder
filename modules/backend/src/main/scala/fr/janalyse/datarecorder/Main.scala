@@ -57,6 +57,7 @@ object Main extends ZIOAppDefault {
   def swaggerRoutes: HttpRoutes[DataRecorderTask] = {
     import sttp.tapir.swagger.bundle.SwaggerInterpreter
     import sttp.apispec.openapi.Info
+    import sttp.tapir.generic.auto.* // MANDATORY TO GENERATE CASE SCHEMA SCHEMA DOCUMENTATION
     ZHttp4sServerInterpreter()
       .from(
         SwaggerInterpreter().fromEndpoints[DataRecorderTask](
@@ -71,9 +72,9 @@ object Main extends ZIOAppDefault {
   val docs = {
     import sttp.tapir.docs.asyncapi.AsyncAPIInterpreter
     import sttp.apispec.asyncapi.Info
-    import sttp.tapir.generic.auto._
+    import sttp.tapir.generic.auto.* // MANDATORY TO GENERATE CASE SCHEMA SCHEMA DOCUMENTATION
     //import sttp.tapir.json.circe._
-    import io.circe.generic.auto._
+    //import io.circe.generic.auto._
 
     val docs = AsyncAPIInterpreter().toAsyncAPI(
       apiEndpoints,

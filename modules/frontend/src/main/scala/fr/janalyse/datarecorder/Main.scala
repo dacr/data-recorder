@@ -86,7 +86,7 @@ object App {
   val beginStream: Modifier[Element] = onMountCallback { _ =>
     Unsafe.unsafe { implicit u =>
       runtime.unsafe.fork {
-        for {
+        val consumeLogic = for {
           inputQueue  <- Queue.unbounded[ClientMessage]
           response    <- dataRecorderService.events.retry(Schedule.spaced(5.second))
           fromFCT     <- ZIO.fromEither(response)
@@ -98,6 +98,9 @@ object App {
                              ZIO.succeed(n + 1)
                          )
         } yield ()
+        consumeLogic
+          .tapError(err => Console.printLine(s"consumer global error $err"))
+          .retry(Schedule.exponential(100.millis, 2d))
       }
     }
   }

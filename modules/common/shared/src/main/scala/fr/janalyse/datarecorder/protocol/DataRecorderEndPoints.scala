@@ -60,9 +60,11 @@ object DataRecorderEndPoints {
 
   // ===================================================================================================================
 
-  val statusForUnknownRecorderIssue  = oneOfVariant(StatusCode.NotFound, jsonBody[UnknownRecorderError].description("Recorder does not exist"))
-  val statusForUnknownWebhookIssue   = oneOfVariant(StatusCode.NotFound, jsonBody[UnknownWebhookError].description("Unknown webhook for given recorder"))
-  val statusForUnknownWebsocketIssue = oneOfVariant(StatusCode.NotFound, jsonBody[UnknownWebsocketError].description("Unknown websocket for given recorder"))
+  val statusForUnknownRecorderIssue   = oneOfVariant(StatusCode.NotFound, jsonBody[ErrorUnknownRecorder].description("Recorder does not exist"))
+  val statusForUnknownWebhookIssue    = oneOfVariant(StatusCode.NotFound, jsonBody[ErrorUnknownWebhook].description("Unknown webhook for given recorder"))
+  val statusForUnknownWebsocketIssue  = oneOfVariant(StatusCode.NotFound, jsonBody[ErrorUnknownWebsocket].description("Unknown websocket for given recorder"))
+  val statusForExpiredRecorderIssue   = oneOfVariant(StatusCode(480), jsonBody[ErrorExpiredRecorder].description("Recorder has expired, it is now read only"))
+  val statusForForbiddenRecorderIssue = oneOfVariant(StatusCode.Forbidden, jsonBody[ErrorForbiddenRecorder].description("Recorder access denied, a valid secret token is mandatory"))
 
   val pathRecorderUUID  = path[UUID]("recorderUUID").example(UUID.fromString("522f7400-2a1d-4820-9328-286203f07940"))
   val pathWebhookUUID   = path[UUID]("webhookUUID").example(UUID.fromString("534a83e7-2767-4783-8b55-048e45388825"))
@@ -133,7 +135,7 @@ object DataRecorderEndPoints {
       .summary("Get all recorded data for the given recorder")
       .description("Returns a stream of all recorded data in chronological order")
       .get
-      .errorOut(oneOf(statusForUnknownRecorderIssue))
+      .errorOut(oneOf(statusForUnknownRecorderIssue, statusForForbiddenRecorderIssue))
     // TODO add secret token
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -146,7 +148,7 @@ object DataRecorderEndPoints {
       .get
       .in(pathWebhookUUID)
       .in("data")
-      .errorOut(oneOf(statusForUnknownRecorderIssue, statusForUnknownWebhookIssue))
+      .errorOut(oneOf(statusForUnknownRecorderIssue, statusForUnknownWebhookIssue, statusForExpiredRecorderIssue))
 
   val echoesWebhookAddDataPostEndpoint =
     echoesWebhookEndpoint
@@ -156,7 +158,7 @@ object DataRecorderEndPoints {
       .post
       .in(pathWebhookUUID)
       .in("data")
-      .errorOut(oneOf(statusForUnknownRecorderIssue, statusForUnknownWebhookIssue))
+      .errorOut(oneOf(statusForUnknownRecorderIssue, statusForUnknownWebhookIssue, statusForExpiredRecorderIssue))
 
   val echoesWebhookAddDataPutEndpoint =
     echoesWebhookEndpoint
@@ -166,7 +168,7 @@ object DataRecorderEndPoints {
       .put
       .in(pathWebhookUUID)
       .in("data")
-      .errorOut(oneOf(statusForUnknownRecorderIssue, statusForUnknownWebhookIssue))
+      .errorOut(oneOf(statusForUnknownRecorderIssue, statusForUnknownWebhookIssue, statusForExpiredRecorderIssue))
 
   // -------------------------------------------------------------------------------------------------------------------
 
