@@ -33,6 +33,19 @@ object DataRecorderEndPoints {
       .in("events")
 
   // ===================================================================================================================
+  val websocketTestEndPoint =
+    endpoint
+      .tag("Test")
+      .name("Example websocket generating random json events every 2 seconds")
+      .summary("Receive application service events")
+      .description("Example websocket endpoint which can be used to test a recorder")
+      .out(webSocketBody[String, CodecFormat.TextPlain, TestJsonOutput, CodecFormat.Json](ZioStreams))
+      .get
+      .in("ws")
+      .in("test")
+      .in("json-random-stream")
+
+  // ===================================================================================================================
 
   private val systemEndpoint =
     endpoint
@@ -62,17 +75,17 @@ object DataRecorderEndPoints {
 
   val statusForUnknownRecorderIssue   = oneOfVariant(StatusCode.NotFound, jsonBody[ErrorUnknownRecorder].description("Recorder does not exist"))
   val statusForUnknownWebhookIssue    = oneOfVariant(StatusCode.NotFound, jsonBody[ErrorUnknownWebhook].description("Unknown webhook for given recorder"))
-  val statusForUnknownWebsocketIssue  = oneOfVariant(StatusCode.NotFound, jsonBody[ErrorUnknownWebsocket].description("Unknown websocket for given recorder"))
+  val statusForUnknownEchoIssue       = oneOfVariant(StatusCode.NotFound, jsonBody[ErrorUnknownWebsocket].description("Unknown echo for given recorder"))
   val statusForExpiredRecorderIssue   = oneOfVariant(StatusCode(480), jsonBody[ErrorExpiredRecorder].description("Recorder has expired, it is now read only"))
   val statusForForbiddenRecorderIssue = oneOfVariant(StatusCode.Forbidden, jsonBody[ErrorForbiddenRecorder].description("Recorder access denied, a valid secret token is mandatory"))
 
-  val pathRecorderUUID  = path[UUID]("recorderUUID").example(UUID.fromString("522f7400-2a1d-4820-9328-286203f07940"))
-  val pathWebhookUUID   = path[UUID]("webhookUUID").example(UUID.fromString("534a83e7-2767-4783-8b55-048e45388825"))
-  val pathWebsocketUUID = path[UUID]("websocketUUID").example(UUID.fromString("034f7765-68b7-4700-81ea-f5377fe9ee19"))
+  val pathRecorderUUID = path[UUID]("recorderUUID").example(UUID.fromString("522f7400-2a1d-4820-9328-286203f07940"))
+  val pathWebhookUUID  = path[UUID]("webhookUUID").example(UUID.fromString("534a83e7-2767-4783-8b55-048e45388825"))
+  val pathEchoUUID     = path[UUID]("echoUUID").example(UUID.fromString("034f7765-68b7-4700-81ea-f5377fe9ee19"))
 
   private val recorderEndpoint =
     endpoint
-      .tag("Recorder")
+      .tag("Recorder management")
       .in("api")
       .in("recorder")
 
@@ -102,32 +115,71 @@ object DataRecorderEndPoints {
       .in(pathRecorderUUID)
       .errorOut(oneOf(statusForUnknownRecorderIssue))
 
+  // -------------------------------------------------------------------------------------------------------------------
+
+  private val recorderEchoEndpoint =
+    endpoint
+      .tag("Recorder echoes management")
+      .in("api")
+      .in("recorder")
+      .in(pathRecorderUUID)
+      .in("echo")
+
+  val recorderEchoListEndpoint =
+    recorderEchoEndpoint
+      .name("List recorder echoes")
+      .summary("List all echoes attached to this recorder")
+      .description("Returns the list of all attached echoes to the given recorder")
+      .get
+      .errorOut(oneOf(statusForUnknownRecorderIssue))
+      .out(jsonBody[List[Echo]])
+
+  val recorderEchoWebsocketCreateEndpoint =
+    recorderEchoEndpoint
+      .name("Create websocket echo")
+      .summary("Attach a new echo to the given recorder")
+      .description("")
+      .post
+      .in("websocket")
+      .out(jsonBody[EchoWebsocket])
+      .errorOut(oneOf(statusForUnknownRecorderIssue, statusForUnknownEchoIssue))
+
+  val recorderEchoWebhookCreateEndpoint =
+    recorderEchoEndpoint
+      .name("Create webhook echo")
+      .summary("Attach a new echo to the given recorder")
+      .description("")
+      .post
+      .in("webhook")
+      .out(jsonBody[EchoWebhook])
+      .errorOut(oneOf(statusForUnknownRecorderIssue, statusForUnknownEchoIssue))
+
+  val recorderEchoGetEndpoint =
+    recorderEchoEndpoint
+      .name("Get echo")
+      .summary("")
+      .description("Returns all echo information for the given recorder")
+      .get
+      .in(pathEchoUUID)
+      .errorOut(oneOf(statusForUnknownRecorderIssue, statusForUnknownEchoIssue))
+
+  val recorderEchoDeleteEndpoint =
+    recorderEchoEndpoint
+      .name("Delete attached echo")
+      .summary("Delete the attached echo for the selected recorder")
+      .description("Delete immediately the given echo for the selected recorder")
+      .delete
+      .in(pathEchoUUID)
+      .errorOut(oneOf(statusForUnknownRecorderIssue, statusForUnknownEchoIssue))
+
   // ===================================================================================================================
 
   private val echoesEndpoint =
     endpoint
-      .tag("Echoes")
+      .tag("Echoes query")
       .in("api")
-      .in("echoes")
-      .in(pathRecorderUUID)
-
-  private val echoesWebhookEndpoint =
-    endpoint
-      .tag("Echoes Webhook")
-      .in("api")
-      .in("echoes")
-      .in(pathRecorderUUID)
-      .in("webhook")
-
-  private val echoesWebsocketEndpoint =
-    endpoint
-      .tag("Echoes Websocket")
-      .in("api")
-      .in("echoes")
-      .in(pathRecorderUUID)
-      .in("websocket")
-
-  // -------------------------------------------------------------------------------------------------------------------
+      .in("echo")
+      .in(pathEchoUUID)
 
   val echoesDataGetEndpoint =
     echoesEndpoint
@@ -140,71 +192,38 @@ object DataRecorderEndPoints {
 
   // -------------------------------------------------------------------------------------------------------------------
 
+  private val echoesWebhookWriteEndpoint =
+    endpoint
+      .tag("Echoes webhooks")
+      .in("api")
+      .in("echo")
+      .in(pathEchoUUID)
+      .in("webhook")
+      .in("data")
+
   val echoesWebhookAddDataGetEndpoint =
-    echoesWebhookEndpoint
+    echoesWebhookWriteEndpoint
       .name("Send data")
       .summary("Send data to this webhook endpoint using simple GET request and query params")
       .description("Send any data as a HTTP GET request")
       .get
-      .in(pathWebhookUUID)
-      .in("data")
-      .errorOut(oneOf(statusForUnknownRecorderIssue, statusForUnknownWebhookIssue, statusForExpiredRecorderIssue))
+      .errorOut(oneOf(statusForUnknownEchoIssue, statusForExpiredRecorderIssue))
 
   val echoesWebhookAddDataPostEndpoint =
-    echoesWebhookEndpoint
+    echoesWebhookWriteEndpoint
       .name("Send data")
       .summary("Send data to this webhook endpoint")
       .description("Send any data as a HTTP POST request")
       .post
-      .in(pathWebhookUUID)
-      .in("data")
-      .errorOut(oneOf(statusForUnknownRecorderIssue, statusForUnknownWebhookIssue, statusForExpiredRecorderIssue))
+      .errorOut(oneOf(statusForUnknownEchoIssue, statusForExpiredRecorderIssue))
 
   val echoesWebhookAddDataPutEndpoint =
-    echoesWebhookEndpoint
+    echoesWebhookWriteEndpoint
       .name("Send data")
       .summary("Send data to this webhook endpoint")
       .description("Send any data as a HTTP PUT request")
       .put
-      .in(pathWebhookUUID)
-      .in("data")
-      .errorOut(oneOf(statusForUnknownRecorderIssue, statusForUnknownWebhookIssue, statusForExpiredRecorderIssue))
-
-  // -------------------------------------------------------------------------------------------------------------------
-
-  val echoesWebsocketListEndpoint =
-    echoesWebsocketEndpoint
-      .name("List recorder websockets")
-      .summary("List all websockets attached to this recorder")
-      .description("Returns the list of all attached websockets to the given recorder")
-      .get
-      .errorOut(oneOf(statusForUnknownRecorderIssue))
-
-  val echoesWebsocketCreateEndpoint =
-    echoesWebsocketEndpoint
-      .name("Attach websocket")
-      .summary("Attach a new websocket to the given recorder")
-      .description("")
-      .post
-      .errorOut(oneOf(statusForUnknownRecorderIssue, statusForUnknownWebsocketIssue))
-
-  val echoesWebSocketGetEndpoint =
-    echoesWebsocketEndpoint
-      .name("Get websocket")
-      .summary("")
-      .description("Returns all websocket information for the given recorder")
-      .get
-      .in(pathWebsocketUUID)
-      .errorOut(oneOf(statusForUnknownRecorderIssue, statusForUnknownWebsocketIssue))
-
-  val echoesWebsocketDeleteEndpoint =
-    echoesWebsocketEndpoint
-      .name("Delete attached websocket")
-      .summary("Delete the attached websocket for the selected recorder")
-      .description("Delete immediately the given websocket for the selected recorder")
-      .delete
-      .in(pathWebsocketUUID)
-      .errorOut(oneOf(statusForUnknownRecorderIssue, statusForUnknownWebsocketIssue))
+      .errorOut(oneOf(statusForUnknownEchoIssue, statusForExpiredRecorderIssue))
 
   // ===================================================================================================================
 
@@ -214,18 +233,21 @@ object DataRecorderEndPoints {
     recorderGetEndpoint,
     recorderDeleteEndPoint,
     // -------------------------------
-    echoesDataGetEndpoint,
+    recorderEchoListEndpoint,
+    recorderEchoWebsocketCreateEndpoint,
+    recorderEchoWebhookCreateEndpoint,
+    recorderEchoGetEndpoint,
+    recorderEchoDeleteEndpoint,
     // -------------------------------
     echoesWebhookAddDataPostEndpoint,
     echoesWebhookAddDataPutEndpoint,
     echoesWebhookAddDataGetEndpoint,
     // -------------------------------
-    echoesWebsocketListEndpoint,
-    echoesWebsocketCreateEndpoint,
-    echoesWebSocketGetEndpoint,
-    echoesWebsocketDeleteEndpoint,
+    echoesDataGetEndpoint,
     // -------------------------------
     serviceEventsEndpoint,
+    // -------------------------------
+    websocketTestEndPoint,
     // -------------------------------
     systemPingEndpoint,
     systemStatusEndpoint
