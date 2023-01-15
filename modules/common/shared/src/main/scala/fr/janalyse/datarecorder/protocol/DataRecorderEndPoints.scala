@@ -161,6 +161,7 @@ object DataRecorderEndPoints {
       .description("Returns all echo information for the given recorder")
       .get
       .in(pathEchoUUID)
+      .out(jsonBody[Echo])
       .errorOut(oneOf(statusForUnknownRecorderIssue, statusForUnknownEchoIssue))
 
   val recorderEchoDeleteEndpoint =
