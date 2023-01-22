@@ -18,12 +18,12 @@ ThisBuild / testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
 // TO AVOID SUCH ERRORS : Referring to non-existent method zio.VersionSpecific$$anon$1.apply(java.lang.Object)java.lang.Object
 // https://www.scala-js.org/doc/project/linking-errors.html
 val versions = new {
-  val zio        = "2.0.5"
+  val zio        = "2.0.6"
   val zioJson    = "0.4.2"
-  val ziologging = "2.1.7"
+  val ziologging = "2.1.8"
   val logback    = "1.4.5"
 
-  val tapir       = "1.2.5"
+  val tapir       = "1.2.6"
   val sttp        = "1.3.12"
   val sttpClient3 = "3.8.8"
   val http4s      = "0.23.13"
@@ -50,7 +50,7 @@ lazy val backend =
         "com.softwaremill.sttp.tapir"   %% "tapir-http4s-server-zio" % versions.tapir,
         "com.softwaremill.sttp.tapir"   %% "tapir-swagger-ui-bundle" % versions.tapir,
         "com.softwaremill.sttp.tapir"   %% "tapir-asyncapi-docs"     % versions.tapir,
-        "com.softwaremill.sttp.apispec" %% "asyncapi-circe-yaml"     % "0.3.1",
+        "com.softwaremill.sttp.apispec" %% "asyncapi-circe-yaml"     % "0.3.2",
         "org.http4s"                    %% "http4s-blaze-server"     % versions.http4s, // ideally in sync with http4s from tapir-http4s-server-zio dependencies
         "ch.qos.logback"                 % "logback-classic"         % versions.logback,
         "dev.zio"                       %% "zio-test"                % versions.zio % Test,

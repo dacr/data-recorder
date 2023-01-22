@@ -1,0 +1,133 @@
+asyncapi: 2.0.0
+info:
+  title: DATA RECORDER API
+  version: 1.0.0
+  description: Data recorder by @crodav
+channels:
+  /ws/system/events:
+    description: Receive client message and broadcast any application service events
+    subscribe:
+      operationId: onWsSystemEvents
+      summary: Receive client message and broadcast any application service event
+      description: Internal communication channel used by the application to broadcast
+        generic message, as well as for client to send any feedback or informatio
+        message
+      tags:
+      - name: System
+      message:
+        $ref: '#/components/messages/ServerEvent'
+    publish:
+      operationId: sendWsSystemEvents
+      summary: Receive client message and broadcast any application service event
+      description: Internal communication channel used by the application to broadcast
+        generic message, as well as for client to send any feedback or informatio
+        message
+      tags:
+      - name: System
+      message:
+        $ref: '#/components/messages/ClientEvent'
+    bindings:
+      ws:
+        method: GET
+  /ws/test/stream:
+    description: Any connection to this endpoint will receive a json payload ever
+      5 seconds
+    subscribe:
+      operationId: onWsTestStream
+      summary: Any connection to this endpoint will receive a json payload every
+        seconds
+      description: This is a websocket debug endpoint which can be used to debug client-side
+        web sockets as it sends every 5 seconds a random message.
+      tags:
+      - name: Test
+      message:
+        $ref: '#/components/messages/TestJsonOutput'
+    publish:
+      operationId: sendWsTestStream
+      summary: Any connection to this endpoint will receive a json payload every
+        seconds
+      description: This is a websocket debug endpoint which can be used to debug client-side
+        web sockets as it sends every 5 seconds a random message.
+      tags:
+      - name: Test
+      message:
+        $ref: '#/components/messages/string'
+    bindings:
+      ws:
+        method: GET
+  /ws/test/echo:
+    description: To receive back the string you've just sent
+    subscribe:
+      operationId: onWsTestEcho
+      summary: To receive back the string you've just sent
+      description: This is a websocket debug endpoint to be used as an echo service,
+        you send a string, and then you'll receive back the same string.
+      tags:
+      - name: Test
+      message:
+        $ref: '#/components/messages/string'
+    publish:
+      operationId: sendWsTestEcho
+      summary: To receive back the string you've just sent
+      description: This is a websocket debug endpoint to be used as an echo service,
+        you send a string, and then you'll receive back the same string.
+      tags:
+      - name: Test
+      message:
+        $ref: '#/components/messages/string'
+    bindings:
+      ws:
+        method: GET
+components:
+  schemas:
+    ClientEvent:
+      required:
+      - message
+      type: object
+      properties:
+        message:
+          type: string
+      description: Generic feedback message coming from the client
+    ServerEvent:
+      required:
+      - message
+      type: object
+      properties:
+        message:
+          type: string
+      description: Generic broadcasted message coming from the backend
+    TestJsonOutput:
+      required:
+      - timestamp
+      - message
+      type: object
+      properties:
+        timestamp:
+          type: string
+          description: When this message has been forged
+          format: date-time
+        message:
+          type: string
+          description: Message echo or automatically generated content
+      description: Websocket debug json message
+  messages:
+    ClientEvent:
+      payload:
+        $ref: '#/components/schemas/ClientEvent'
+      contentType: application/json
+      description: Generic feedback message coming from the client
+    ServerEvent:
+      payload:
+        $ref: '#/components/schemas/ServerEvent'
+      contentType: application/json
+      description: Generic broadcasted message coming from the backend
+    string:
+      payload:
+        type: string
+      contentType: text/plain
+    TestJsonOutput:
+      payload:
+        $ref: '#/components/schemas/TestJsonOutput'
+      contentType: application/json
+      description: Websocket debug json message
+

@@ -12,6 +12,7 @@ import zio.stream.*
 import org.http4s.*
 import org.http4s.blaze.server.BlazeServerBuilder
 import org.http4s.server.Router
+import org.http4s.server.websocket.WebSocketBuilder2
 
 object Main extends ZIOAppDefault {
 
@@ -41,10 +42,10 @@ object Main extends ZIOAppDefault {
 
   // -------------------------------------------------------------------------------------------------------------------
   val serviceEventsEndpointLogic =
-    ZIO.succeed((clientMessageStream: Stream[Throwable, ClientMessage]) =>
+    ZIO.succeed((clientMessageStream: Stream[Throwable, ClientEvent]) =>
       ZStream
         .tick(2.seconds)
-        .zipWith(ZStream("A", "B", "C", "D").repeat(Schedule.forever))((_, c) => ServerMessage(c))
+        .zipWith(ZStream("A", "B", "C", "D").repeat(Schedule.forever))((_, c) => ServerEvent(c))
     )
 
   val serviceEventsRoutes =
@@ -53,8 +54,35 @@ object Main extends ZIOAppDefault {
       .toRoutes
 
   // -------------------------------------------------------------------------------------------------------------------
+  val websocketTestBroadcastEndpointLogic =
+    ZIO.succeed((clientMessageStream: Stream[Throwable, String]) =>
+      ZStream
+        .tick(5.seconds)
+        .mapZIO(_ => Clock.currentDateTime)
+        .zipWith(ZStream("A", "B", "C", "D").repeat(Schedule.forever))((timestamp, message) => TestJsonOutput(timestamp, message))
+    )
 
-  def swaggerRoutes: HttpRoutes[DataRecorderTask] = {
+  val websocketTestBroadcastRoutes =
+    ZHttp4sServerInterpreter()
+      .fromWebSocket(websocketTestBroadcastEndPoint.zServerLogic[DataRecorderEnv](_ => websocketTestBroadcastEndpointLogic))
+      .toRoutes
+
+  // -------------------------------------------------------------------------------------------------------------------
+  val websocketTestEchoEndpointLogic =
+    ZIO.succeed((clientMessageStream: Stream[Throwable, String]) => clientMessageStream.zipWithIndex.map { case (input, index) => s"$index: $input" })
+
+  val websocketTestEchoRoutes =
+    ZHttp4sServerInterpreter()
+      .fromWebSocket(websocketTestEchoEndPoint.zServerLogic[DataRecorderEnv](_ => websocketTestEchoEndpointLogic))
+      .toRoutes
+
+  // -------------------------------------------------------------------------------------------------------------------
+
+  val apiName = "DATA RECORDER API"
+  val apiVersion = "1.0.0"
+  val apiDescription = Some("Data recorder by @crodav")
+
+  def swaggerDocumentationRoutes: HttpRoutes[DataRecorderTask] = {
     import sttp.tapir.swagger.bundle.SwaggerInterpreter
     import sttp.apispec.openapi.Info
     import sttp.tapir.generic.auto.* // MANDATORY TO GENERATE CASE SCHEMA SCHEMA DOCUMENTATION
@@ -62,32 +90,32 @@ object Main extends ZIOAppDefault {
       .from(
         SwaggerInterpreter().fromEndpoints[DataRecorderTask](
           apiEndpoints,
-          Info(title = "DATA RECORDER API", version = "1.0.0", description = Some("Data recorder by @crodav"))
+          Info(title = apiName, version = apiVersion, description = apiDescription)
         )
       )
       .toRoutes
   }
 
-  //def asyncapiRoute: HttpRoutes[DataRecorderTask] = {
-  val docs = {
+  val asyncapiDocumentation = {
     import sttp.tapir.docs.asyncapi.AsyncAPIInterpreter
     import sttp.apispec.asyncapi.Info
     import sttp.tapir.generic.auto.* // MANDATORY TO GENERATE CASE SCHEMA SCHEMA DOCUMENTATION
-    //import sttp.tapir.json.circe._
-    //import io.circe.generic.auto._
+    import sttp.apispec.asyncapi.circe.yaml._
 
     val docs = AsyncAPIInterpreter().toAsyncAPI(
       apiEndpoints,
-      Info(title = "DATA RECORDER API", version = "1.0.0", description = Some("Data recorder by @crodav"))
+      Info(title = apiName, version = apiVersion, description = apiDescription)
     )
-
-    import sttp.apispec.asyncapi.circe.yaml._
 
     println(docs.toYaml)
 
-    //ZHttp4sServerInterpreter().from(docs)
     docs
   }
+
+  val asyncapiDocumentationRoutes: HttpRoutes[DataRecorderTask] = {
+    ZHttp4sServerInterpreter().from(asyncapiDocumentation)
+  }
+
 
   // -------------------------------------------------------------------------------------------------------------------
 
@@ -96,8 +124,15 @@ object Main extends ZIOAppDefault {
     import cats.syntax.all.*
     import cats.implicits.*
 
-    //val routes = pingRoutes <+> serviceStatusRoutes <+> asyncapiRoute
-    val routes = pingRoutes <+> serviceStatusRoutes <+> swaggerRoutes
+    val routes =
+      pingRoutes <+>
+        serviceStatusRoutes <+>
+        swaggerDocumentationRoutes
+
+    def websocketRoutes(wsb: WebSocketBuilder2[DataRecorderTask]) =
+      serviceEventsRoutes(wsb) <+>
+        websocketTestEchoRoutes(wsb) <+>
+        websocketTestBroadcastRoutes(wsb)
 
     // Starting the server
     val serverApp: ZIO[DataRecorderEnv, Throwable, Unit] = {
@@ -106,7 +141,7 @@ object Main extends ZIOAppDefault {
           .withExecutionContext(executor.asExecutionContext)
           .bindHttp(8080, "localhost")
           // .withHttpApp(Router("/" -> routes).orNotFound)
-          .withHttpWebSocketApp(wsb => Router("/" -> (serviceEventsRoutes(wsb) <+> routes)).orNotFound)
+          .withHttpWebSocketApp(wsb => Router("/" -> (websocketRoutes(wsb) <+> routes)).orNotFound)
           .serve
           .compile
           .drain

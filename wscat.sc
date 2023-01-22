@@ -10,31 +10,36 @@
 
 // ---------------------
 //> using scala  "3.2.1"
-//> using lib "dev.zio::zio:2.0.5"
-//> using lib "com.softwaremill.sttp.client3::zio:3.8.7"
+//> using lib "dev.zio::zio:2.0.6"
+//> using lib "com.softwaremill.sttp.client3::zio:3.8.8"
 // ---------------------
 
 import zio.*
-import sttp.client3.*, sttp.client3.basicRequest.*, sttp.ws.*
+import sttp.client3.*, sttp.client3.basicRequest.*, sttp.ws.*, sttp.model.*
 
 object WebSocketCat extends ZIOAppDefault {
 
-  val target = uri"ws://127.0.0.1:3000/ws/system/events"
+  // val defaultTarget = "wss://ws.postman-echo.com/raw" // This is an echo service also
+  // val defaultTarget = "ws://127.0.0.1:3000/ws/test/echo"
+  val defaultTarget = "ws://127.0.0.1:3000/ws/test/stream"
 
   def processWebsocket(ws: WebSocket[Task]): Task[Unit] = {
-    val receiveOne = ws.receiveText().flatMap(res => Console.printLine(s"received $res"))
-    val sendOne    = Console.readLine.flatMap(line => ws.sendText(s"""{"message":"$line"}"""))
+    val receiveOne = ws.receiveText().flatMap(res => Console.printLine(s"$res"))
+    val sendOne    = Console.readLine.flatMap(line => ws.sendText(line))
     receiveOne.forever.race(sendOne.forever)
   }
 
   def run =
     for {
-      backend  <- sttp.client3.httpclient.zio.HttpClientZioBackend()
-      response <- basicRequest
-        .get(target)
-        .response(asWebSocket(processWebsocket))
-        .send(backend)
+      args      <- getArgs
+      target     = args.headOption.getOrElse(defaultTarget)
+      targetURI <- ZIO.fromEither(Uri.parse(target))
+      backend   <- sttp.client3.httpclient.zio.HttpClientZioBackend()
+      response  <- basicRequest
+                     .get(targetURI)
+                     .response(asWebSocket(processWebsocket))
+                     .send(backend)
     } yield response
 }
 
-WebSocketCat.main(Array.empty)
+WebSocketCat.main(args)

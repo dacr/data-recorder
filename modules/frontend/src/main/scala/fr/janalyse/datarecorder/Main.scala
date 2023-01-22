@@ -41,7 +41,7 @@ case class DataRecorderService(backend: Backend) {
       .send(backend)
       .tapError(err => ZIO.attempt(err.printStackTrace()) *> Console.printLine("serviceStatus =====>" + err.toString))
 
-  val events: Task[Either[Unit, Stream[Throwable, ClientMessage] => Stream[Throwable, ServerMessage]]] =
+  val events: Task[Either[Unit, Stream[Throwable, ClientEvent] => Stream[Throwable, ServerEvent]]] =
     SttpClientInterpreter()
       .toClientThrowDecodeFailures(serviceEventsEndpoint, baseUri = wsBaseUri, backend)
       .apply(())
@@ -87,7 +87,7 @@ object App {
     Unsafe.unsafe { implicit u =>
       runtime.unsafe.fork {
         val consumeLogic = for {
-          inputQueue  <- Queue.unbounded[ClientMessage]
+          inputQueue  <- Queue.unbounded[ClientEvent]
           response    <- dataRecorderService.events.retry(Schedule.spaced(5.second))
           fromFCT     <- ZIO.fromEither(response)
           inputStream  = ZStream.fromQueue(inputQueue)

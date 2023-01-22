@@ -23,27 +23,39 @@ object DataRecorderEndPoints {
   val serviceEventsEndpoint =
     endpoint
       .tag("System")
-      .name("Application service events")
-      .summary("Receive application service events")
-      .description("Receive broadcasted application service events")
-      .out(webSocketBody[ClientMessage, CodecFormat.Json, ServerMessage, CodecFormat.Json](ZioStreams))
+      .name("Service events")
+      .summary("Receive client message and broadcast any application service events")
+      .description("Internal communication channel used by the application to broadcast generic message, as well as for client to send any feedback or information message")
+      .out(webSocketBody[ClientEvent, CodecFormat.Json, ServerEvent, CodecFormat.Json](ZioStreams))
       .get
       .in("ws")
       .in("system")
       .in("events")
 
   // ===================================================================================================================
-  val websocketTestEndPoint =
+  val websocketTestBroadcastEndPoint =
     endpoint
       .tag("Test")
-      .name("Example websocket generating random json events every 2 seconds")
-      .summary("Receive application service events")
-      .description("Example websocket endpoint which can be used to test a recorder")
+      .name("Websocket client broadcast debug endpoint")
+      .summary("Any connection to this endpoint will receive a json payload every 5 seconds")
+      .description("This is a websocket debug endpoint which can be used to debug client-side web sockets as it sends every 5 seconds a random message.")
       .out(webSocketBody[String, CodecFormat.TextPlain, TestJsonOutput, CodecFormat.Json](ZioStreams))
       .get
       .in("ws")
       .in("test")
-      .in("json-random-stream")
+      .in("stream")
+
+  val websocketTestEchoEndPoint =
+    endpoint
+      .tag("Test")
+      .name("Websocket client echo debug endpoint")
+      .summary("To receive back the string you've just sent")
+      .description("This is a websocket debug endpoint to be used as an echo service, you send a string, and then you'll receive back the same string.")
+      .out(webSocketBody[String, CodecFormat.TextPlain, String, CodecFormat.TextPlain](ZioStreams))
+      .get
+      .in("ws")
+      .in("test")
+      .in("echo")
 
   // ===================================================================================================================
 
@@ -248,7 +260,8 @@ object DataRecorderEndPoints {
     // -------------------------------
     serviceEventsEndpoint,
     // -------------------------------
-    websocketTestEndPoint,
+    websocketTestBroadcastEndPoint,
+    websocketTestEchoEndPoint,
     // -------------------------------
     systemPingEndpoint,
     systemStatusEndpoint
